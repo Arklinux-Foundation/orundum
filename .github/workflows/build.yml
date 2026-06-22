@@ -55,15 +55,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Copy GHCR auth for podman (root)
-        run: |
-          sudo mkdir -p /root/.docker
-          sudo cp ~/.docker/config.json /root/.docker/config.json
 
       - name: Build image
         run: |
-          sudo podman build \
-            --squash-all \
+          docker build \
             --build-arg VARIANT=${{ matrix.variant }} \
             -t ${{ steps.registry.outputs.image }}:${{ matrix.variant }} \
             -f .github/Containerfile \
@@ -71,6 +66,5 @@ jobs:
 
       - name: Push image
         run: |
-          sudo podman push \
-            --compression-format zstd:chunked \
+          docker push \
             ${{ steps.registry.outputs.image }}:${{ matrix.variant }}
