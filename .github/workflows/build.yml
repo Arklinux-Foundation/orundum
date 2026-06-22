@@ -50,7 +50,15 @@ jobs:
         id: registry
         run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
       - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u oauth2accesstoken --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Copy GHCR auth for podman (root)
+        run: |
+          sudo mkdir -p /root/.docker
+          sudo cp ~/.docker/config.json /root/.docker/config.json
 
       - name: Build image
         run: |
