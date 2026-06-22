@@ -1,0 +1,57 @@
+name: Build Orundum Container
+run-name: "Orundum — ${{ github.event_name == 'schedule' && 'Daily' || github.event_name == 'push' && 'Push' || 'Manual' }} · ${{ github.run_number }}"
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [ark, ark-nvidia, ark-zen, ark-zen-nvidia, ark-lts, ark-lts-nvidia, ark-hardened, ark-hardened-nvidia]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Set up dependencies
+        run: sudo apt-get update && sudo apt-get install -y podman
+
+      - name: Set lowercase registry
+        id: registry
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build image
+        run: |
+          sudo podman build \
+            --squash-all \
+            --build-arg VARIANT=${{ matrix.variant }} \
+            -t ${{ steps.registry.outputs.image }}:${{ matrix.variant }} \
+            -f Containerfile \
+            .
+
+      - name: Push image
+        run: |
+          sudo podman push \
+            --compression-format zstd:chunked \
+            ${{ steps.registry.outputs.image }}:${{ matrix.variant }}
