@@ -47,7 +47,7 @@ jobs:
             --squash-all \
             --build-arg VARIANT=${{ matrix.variant }} \
             -t ${{ steps.registry.outputs.image }}:${{ matrix.variant }} \
-            -f Containerfile \
+            -f .github/Containerfile \
             .
 
       - name: Push image
