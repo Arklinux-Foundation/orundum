@@ -50,7 +50,7 @@ jobs:
         id: registry
         run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
       - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u oauth2accesstoken --password-stdin
 
       - name: Build image
         run: |
