@@ -1,5 +1,5 @@
 name: Build Orundum Container
-run-name: "Orundum — ${{ github.event_name == 'schedule' && 'Daily' || github.event_name == 'push' && 'Push' || 'Manual' }} · ${{ github.run_number }}"
+run-name: "Orundum ${{ github.sha }}"
 
 on:
   push:
@@ -20,6 +20,17 @@ jobs:
         variant: [ark, ark-nvidia, ark-zen, ark-zen-nvidia, ark-lts, ark-lts-nvidia, ark-hardened, ark-hardened-nvidia]
     steps:
       - uses: actions/checkout@v6
+
+      - name: Set dynamic run name
+        run: |
+          SHA7=$(echo "${{ github.sha }}" | cut -c1-7)
+          curl -sS -X PATCH \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -d "{\"name\":\"Orundum $SHA7 $(date -u '+%Y-%m-%d %H:%M:%S UTC')\"}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
